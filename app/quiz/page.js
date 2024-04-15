@@ -1,19 +1,16 @@
 const QuizPage = () => {
   return (
     <>
-      <div className="flex flex-col min-h-[100dvh]">
-        <header className="flex items-center p-4 border-b">
-          <h1 className="text-lg font-bold tracking-tighter ml-2">
-            Multiple Choice Quiz
-          </h1>
-          <div className="ml-auto flex items-center gap-2">
+      <div className="flex flex-col">
+        <header className="flex items-center pb-4 border-b">
+          <div className="ml-auto">
             <button className="text-sm">Restart Quiz</button>
           </div>
         </header>
         <main className="flex-1">
           <div className="container flex flex-col justify-center gap-4 p-4 md:gap-10 md:p-6">
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold tracking-tighter">
+              <h2 className="text-xl font-semibold tracking-tighter">
                 What is the capital of France?
               </h2>
             </div>
@@ -71,7 +68,6 @@ const QuizPage = () => {
           </div>
         </main>
       </div>
-      ;
     </>
   );
 };
