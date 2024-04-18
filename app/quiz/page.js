@@ -1,6 +1,7 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import { useState } from 'react';
+import ConfettiComponent from '../components/ConfettiComponent';
 
 const QuizPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -8,13 +9,13 @@ const QuizPage = () => {
   const [userAnswers, setUserAnswers] = useState({});
   const [missedQuestions, setMissedQuestions] = useState([]);
   const [quizLength, setQuizLength] = useState(7);
+  const [quizPassed, setQuizPassed] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
   // Dynamically set the number of questions
   const handleRange = (e) => {
     const rangeValue = e.target.value;
     setQuizLength(rangeValue);
-    console.log('rangeValue', rangeValue);
   };
 
   const loadQuiz = async () => {
@@ -23,7 +24,7 @@ const QuizPage = () => {
     );
     const data = await response.json();
 
-    // Select random questions from the data
+    //! Select random questions from the data
     const randomQuestions = data
       .sort(() => 0.5 - Math.random())
       .slice(0, quizLength);
@@ -73,6 +74,11 @@ const QuizPage = () => {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
       setShowSummary(true);
+      // Determine if the quiz is passed
+      const totalCorrect = quizLength - missedQuestions.length;
+      if (totalCorrect >= 6) {
+        setQuizPassed(true);
+      }
     }
   };
   // Reset the quiz and refresh the page
@@ -103,14 +109,14 @@ const QuizPage = () => {
             <div className="quiz-container p-4">
               {!questions.length ? (
                 <button
-                  className="text-sm bg-black text-white px-3 py-2 rounded"
+                  className="text-sm bg-black text-white p-2 rounded"
                   onClick={loadQuiz}
                 >
                   Start Quiz
                 </button>
               ) : (
                 <button
-                  className="text-sm bg-black text-white px-3 py-2 rounded"
+                  className="text-sm bg-black text-white p-2 rounded"
                   onClick={resetQuiz}
                 >
                   Reset Quiz
@@ -165,7 +171,7 @@ const QuizPage = () => {
                 )}
               </div>
               <button
-                className="bg-black text-white px-3 py-2 rounded w-full md:w-auto"
+                className="bg-black text-sm text-white p-3 rounded w-full md:w-auto"
                 onClick={submitAnswer}
               >
                 Submit Answer
@@ -173,6 +179,8 @@ const QuizPage = () => {
             </div>
           ) : (
             <div className="flex flex-col space-y-5">
+              {/* Display the confetti animation if the quiz is passed */}
+              {quizPassed && <ConfettiComponent />}
               <h2 className="text-xl font-semibold tracking-tighter border-black border-b pb-3">
                 Quiz Summary
               </h2>
@@ -187,14 +195,21 @@ const QuizPage = () => {
                   Incorrect Answers:{' '}
                   <span className="font-normal">{missedQuestions.length}</span>
                 </p>
-                <p className="font-semibold mb-2">
-                  {missedQuestions.length > 0
-                    ? 'Questions Missed:'
-                    : 'Question Missed:'}
+                <p className="font-semibold mb-5">
+                  {missedQuestions.length > 0 ? 'What you missed: ' : ''}
                 </p>
                 <ul className="space-y-2">
+                  {/* Display the question and answer missed */}
                   {missedQuestions.map((question, index) => (
-                    <li key={index}>{question}</li>
+                    <li key={index} className="mb-4">
+                      <p className="font-semibold mb-3">{question}</p>
+                      <p className="font-normal">
+                        Correct Answer:{' '}
+                        {questions
+                          .find((q) => q.question === question)
+                          ?.correct.join(', ')}
+                      </p>
+                    </li>
                   ))}
                 </ul>
               </div>

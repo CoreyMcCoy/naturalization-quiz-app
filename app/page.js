@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 
 export default function Home() {
@@ -23,12 +25,11 @@ export default function Home() {
         <p className="text-center md:text-left mb-10">
           You need to correctly answer at least 6 questions to pass. Ready?
         </p>
-
         <Link
           href="/quiz"
           className="btn bg-black hover:bg-black w-full md:w-auto text-white rounded"
         >
-          Start Quiz
+          <button>Start Quiz</button>
         </Link>
       </div>
     </>

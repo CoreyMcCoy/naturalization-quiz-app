@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.confetti-fade-out {
+    transition: opacity 1s ease-out;
+    opacity: 0;
+  }
