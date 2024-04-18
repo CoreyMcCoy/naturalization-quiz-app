@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 
 const QuizPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -24,6 +24,8 @@ const QuizPage = () => {
 
   const handleAnswerChange = (questionId, selectedAnswer) => {
     const currentAnswers = userAnswers[questionId] || [];
+    // log the question's correct answer
+    console.log('correct answer', questions[currentQuestionIndex].correct);
     console.log('currentAnswers', currentAnswers);
     let updatedAnswers;
     if (currentAnswers.includes(selectedAnswer)) {
@@ -45,10 +47,10 @@ const QuizPage = () => {
       return;
     }
     const currentQuestion = questions[currentQuestionIndex];
-    const userCorrectAnswers = userAnswers[currentQuestion.id] || [];
-    console.log('userCorrectAnswers', userCorrectAnswers);
+    const userCurrentAnswers = userAnswers[currentQuestion.id] || [];
+    console.log('userCurrentAnswers', userCurrentAnswers);
     const correctAnswersCount = currentQuestion.correct.filter((answer) =>
-      userCorrectAnswers.includes(answer)
+      userCurrentAnswers.includes(answer)
     ).length;
 
     // Check if the number of correct answers matches at least one correct option
@@ -79,12 +81,14 @@ const QuizPage = () => {
         {/* Create a button to start the quiz or reset the quiz */}
         <div className="quiz-container ml-auto p-4 md:gap-10 md:p-6">
           {!questions.length ? (
-            <button
-              className="bg-black text-white px-4 py-2 rounded"
-              onClick={loadQuiz}
-            >
-              Start Quiz
-            </button>
+            <Suspense fallback={<span className="loading">Loading...</span>}>
+              <button
+                className="bg-black text-white px-4 py-2 rounded"
+                onClick={loadQuiz}
+              >
+                Start Quiz
+              </button>
+            </Suspense>
           ) : (
             <button
               className="bg-black text-white px-4 py-2 rounded"
@@ -127,7 +131,7 @@ const QuizPage = () => {
                 )}
               </div>
               <button
-                className="bg-black text-white px-4 py-2 rounded"
+                className="bg-black text-white px-4 py-2 rounded w-full md:w-auto"
                 onClick={submitAnswer}
               >
                 Submit Answer
