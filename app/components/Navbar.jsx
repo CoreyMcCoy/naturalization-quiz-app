@@ -7,10 +7,6 @@ const Navbar = () => {
         SaaS Boilerplate
       </Link>
       <nav className="gap-5">
-        <Link href="/quiz" className="">
-          Start Quiz
-        </Link>
-
         {/* <Link href="#" className="btn text-sm">
           Sign-out
         </Link>
