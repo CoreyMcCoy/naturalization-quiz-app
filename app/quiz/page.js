@@ -7,18 +7,26 @@ const QuizPage = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
   const [missedQuestions, setMissedQuestions] = useState([]);
-  const [quizLength, setQuizLength] = useState(0);
+  const [quizLength, setQuizLength] = useState(7);
   const [showSummary, setShowSummary] = useState(false);
+
+  // Dynamically set the number of questions
+  const handleRange = (e) => {
+    const rangeValue = e.target.value;
+    setQuizLength(rangeValue);
+    console.log('rangeValue', rangeValue);
+  };
 
   const loadQuiz = async () => {
     const response = await fetch(
       'https://naturalization-quiz-api.onrender.com/api/v1/quiz'
     );
     const data = await response.json();
-    // Set the number of questions to 5
-    setQuizLength(2);
+
     // Select random questions from the data
-    const randomQuestions = data.sort(() => 0.5 - Math.random()).slice(0, 2);
+    const randomQuestions = data
+      .sort(() => 0.5 - Math.random())
+      .slice(0, quizLength);
     setQuestions(randomQuestions);
   };
 
@@ -42,10 +50,11 @@ const QuizPage = () => {
   };
 
   const submitAnswer = () => {
-    // Set the button state to disabled if no answer is selected
-    if (!userAnswers[questions[currentQuestionIndex].id]) {
+    // Set the button state to disabled if the quiz hasn't started or there is no answer is selected
+    if (!questions.length || !userAnswers[questions[currentQuestionIndex].id]) {
       return;
     }
+
     const currentQuestion = questions[currentQuestionIndex];
     const userCurrentAnswers = userAnswers[currentQuestion.id] || [];
     console.log('userCurrentAnswers', userCurrentAnswers);
@@ -68,34 +77,59 @@ const QuizPage = () => {
   };
   // Reset the quiz and refresh the page
   const resetQuiz = () => {
+    setQuizLength(7);
     setUserAnswers({});
     setMissedQuestions([]);
     setCurrentQuestionIndex(0);
     setShowSummary(false);
     loadQuiz();
+
+    // Refresh the page
+    window.location.reload();
   };
 
   return (
     <>
       <main className="flex flex-col">
-        {/* Create a button to start the quiz or reset the quiz */}
-        <div className="quiz-container ml-auto p-4 md:gap-10 md:p-6">
-          {!questions.length ? (
-            <Suspense fallback={<span className="loading">Loading...</span>}>
-              <button
-                className="bg-black text-white px-4 py-2 rounded"
-                onClick={loadQuiz}
-              >
-                Start Quiz
-              </button>
-            </Suspense>
-          ) : (
-            <button
-              className="bg-black text-white px-4 py-2 rounded"
-              onClick={resetQuiz}
-            >
-              Reset Quiz
-            </button>
+        <div className="header flex flex-col mb-10">
+          <div className="flex justify-between">
+            <h2 className="self-center">
+              Select the number of questions for the quiz: {''}
+              <span className="font-medium text-xs text-white bg-black px-2 py-1 rounded-md">
+                {!quizLength ? 7 : quizLength}
+              </span>
+            </h2>
+            {/* Create a button to start the quiz or reset the quiz */}
+            <div className="quiz-container p-4">
+              {!questions.length ? (
+                <button
+                  className="text-sm bg-black text-white px-3 py-2 rounded"
+                  onClick={loadQuiz}
+                >
+                  Start Quiz
+                </button>
+              ) : (
+                <button
+                  className="text-sm bg-black text-white px-3 py-2 rounded"
+                  onClick={resetQuiz}
+                >
+                  Reset Quiz
+                </button>
+              )}
+            </div>
+          </div>
+          {/* If the quiz has started, disable this input */}
+          {!questions.length && (
+            <input
+              onChange={handleRange}
+              type="range"
+              name="range"
+              min="6"
+              max="10"
+              step="1"
+              defaultValue={quizLength}
+              className="range [--range-shdw:black] range-xs mb-5"
+            />
           )}
         </div>
 
@@ -131,7 +165,7 @@ const QuizPage = () => {
                 )}
               </div>
               <button
-                className="bg-black text-white px-4 py-2 rounded w-full md:w-auto"
+                className="bg-black text-white px-3 py-2 rounded w-full md:w-auto"
                 onClick={submitAnswer}
               >
                 Submit Answer

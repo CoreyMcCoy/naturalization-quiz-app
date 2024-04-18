@@ -3,8 +3,8 @@ import Link from 'next/link';
 const Navbar = () => {
   return (
     <div className="navbar py-4 flex justify-between">
-      <Link href="/" className="text-xl font-semibold tracking-tight">
-        SaaS Boilerplate
+      <Link href="/" className="text-xl font-bold tracking-tight">
+        NQA
       </Link>
       <nav className="gap-5">
         {/* <Link href="#" className="btn text-sm">
