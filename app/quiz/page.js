@@ -100,7 +100,7 @@ const QuizPage = () => {
         <div className="header flex flex-col mb-10">
           <div className="flex justify-between">
             <h2 className="self-center">
-              Select the number of questions for the quiz: {''}
+              Select a number of questions: {''}
               <span className="font-medium text-xs text-white bg-black px-2 py-1 rounded-md">
                 {!quizLength ? 7 : quizLength}
               </span>
@@ -112,14 +112,14 @@ const QuizPage = () => {
                   className="text-sm bg-black text-white p-2 rounded"
                   onClick={loadQuiz}
                 >
-                  Start Quiz
+                  Start
                 </button>
               ) : (
                 <button
                   className="text-sm bg-black text-white p-2 rounded"
                   onClick={resetQuiz}
                 >
-                  Reset Quiz
+                  Reset
                 </button>
               )}
             </div>
