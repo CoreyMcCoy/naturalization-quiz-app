@@ -4,91 +4,105 @@ import { useState } from 'react';
 import ConfettiComponent from '../components/ConfettiComponent';
 
 const QuizPage = () => {
+  const [stage, setStage] = useState('setup'); // 'setup', 'quiz', 'summary'
+  const [quizLength, setQuizLength] = useState(7);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState({});
+  const [correctAnswerCount, setCorrectAnswerCount] = useState([]);
   const [missedQuestions, setMissedQuestions] = useState([]);
-  const [quizLength, setQuizLength] = useState(7);
-  const [quizPassed, setQuizPassed] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
-  // Dynamically set the number of questions
+  //* Dynamically set the number of questions: Done
   const handleRange = (e) => {
     const rangeValue = e.target.value;
     setQuizLength(rangeValue);
   };
 
+  //* Load the quiz data from the API: Done
   const loadQuiz = async () => {
+    setStage('quiz');
     const response = await fetch(
       'https://naturalization-quiz-api.onrender.com/api/v1/quiz'
     );
     const data = await response.json();
 
-    //! Select random questions from the data
-    const randomQuestions = data
-      .sort(() => 0.5 - Math.random())
-      .slice(0, quizLength);
+    // Get a random set of questions
+    const randomQuestions = getRandomQuestions(data, quizLength);
+
+    // Set the questions to the state
     setQuestions(randomQuestions);
   };
 
-  const handleAnswerChange = (questionId, selectedAnswer) => {
-    const currentAnswers = userAnswers[questionId] || [];
-    // log the question's correct answer
-    console.log('correct answer', questions[currentQuestionIndex].correct);
-    console.log('currentAnswers', currentAnswers);
-    let updatedAnswers;
-    if (currentAnswers.includes(selectedAnswer)) {
-      console.log('selectedAnswer', selectedAnswer);
-      // Remove the answer if it's already selected
-      updatedAnswers = currentAnswers.filter(
-        (answer) => answer !== selectedAnswer
-      );
-    } else {
-      // Add the answer to the selections
-      updatedAnswers = [...currentAnswers, selectedAnswer];
-    }
-    setUserAnswers({ ...userAnswers, [questionId]: updatedAnswers });
-  };
+  //* Get a random set of questions: Done
+  function getRandomQuestions(data, quizLength) {
+    const selectedIndices = new Set();
+    const randomQuestions = [];
 
-  const submitAnswer = () => {
-    // Set the button state to disabled if the quiz hasn't started or there is no answer is selected
-    if (!questions.length || !userAnswers[questions[currentQuestionIndex].id]) {
+    while (randomQuestions.length < quizLength) {
+      let index = Math.floor(Math.random() * data.length); // Generate a random index
+      if (!selectedIndices.has(index)) {
+        // Check if the index has already been used
+        selectedIndices.add(index); // Add the index to the set
+        randomQuestions.push(data[index]); // Add the question to the output array
+      }
+    }
+
+    return randomQuestions;
+  }
+
+  //* HandleSubmitAnswer
+  // Handle the user's answer selection
+  // Check to see if the user's answer is part of the data.correct array
+  // If the user's answer is part of the array of correct answers, add the correct answer to the correctAnswerCount array and display it in the summary section at the end of the quiz
+  // If the user's answer is incorrect, add the question to the missedQuestions array and display it in the summary section at the end of the quiz
+  // Update the user's answers object with the current question and the user's answer
+  // Check if the quiz is over
+  // Clear the user's answer selection
+  // Move to the next question
+
+  const handleSubmitAnswer = () => {
+    const answer = document.querySelector('input[name="answer"]:checked');
+    if (!answer) {
+      alert('Please select an answer');
       return;
     }
 
+    const selectedAnswer = answer.value;
     const currentQuestion = questions[currentQuestionIndex];
-    const userCurrentAnswers = userAnswers[currentQuestion.id] || [];
-    console.log('userCurrentAnswers', userCurrentAnswers);
-    const correctAnswersCount = currentQuestion.correct.filter((answer) =>
-      userCurrentAnswers.includes(answer)
-    ).length;
+    const isCorrect = currentQuestion.correct.includes(selectedAnswer);
 
-    // Check if the number of correct answers matches at least one correct option
-    const isCorrect = correctAnswersCount > 0;
+    // Clear the selected answer
+    answer.checked = false;
 
-    if (!isCorrect) {
-      setMissedQuestions([...missedQuestions, currentQuestion.question]);
+    // Batch updates to avoid multiple re-renders
+    setUserAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [currentQuestion.question]: isCorrect,
+    }));
+
+    // Update the correct answer count
+    if (isCorrect) {
+      setCorrectAnswerCount((prevCorrect) => [...prevCorrect, currentQuestion]);
+    } else {
+      setMissedQuestions((prevMissed) => [...prevMissed, currentQuestion]);
     }
 
-    if (currentQuestionIndex + 1 < quizLength) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      setShowSummary(true);
-      // Determine if the quiz is passed
-      const totalCorrect = quizLength - missedQuestions.length;
-      if (totalCorrect >= 6) {
-        setQuizPassed(true);
-      }
+    // Check if the quiz is over and update the question index in one step
+    const nextQuestionIndex = currentQuestionIndex + 1;
+    setCurrentQuestionIndex(nextQuestionIndex);
+    if (nextQuestionIndex === questions.length) {
+      setStage('summary');
     }
   };
-  // Reset the quiz and refresh the page
+
+  //* Reset the quiz and refresh the page
   const resetQuiz = () => {
     setQuizLength(7);
     setUserAnswers({});
     setMissedQuestions([]);
     setCurrentQuestionIndex(0);
-    setShowSummary(false);
-    loadQuiz();
+    setStage('setup');
 
     // Refresh the page
     window.location.reload();
@@ -97,125 +111,128 @@ const QuizPage = () => {
   return (
     <>
       <main className="flex flex-col">
-        <div className="header flex flex-col mb-10">
-          <div className="flex justify-between">
-            <h2 className="self-center">
-              Select a number of questions: {''}
-              <span className="font-medium text-xs text-white bg-black px-2 py-1 rounded-md">
-                {!quizLength ? 7 : quizLength}
-              </span>
-            </h2>
-            {/* Create a button to start the quiz or reset the quiz */}
-            <div className="quiz-container p-4">
-              {!questions.length ? (
-                <button
-                  className="text-sm bg-black text-white p-2 rounded"
-                  onClick={loadQuiz}
-                >
-                  Start
-                </button>
-              ) : (
-                <button
-                  className="text-sm bg-black text-white p-2 rounded"
-                  onClick={resetQuiz}
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
-          {/* If the quiz has started, disable this input */}
-          {!questions.length && (
-            <input
-              onChange={handleRange}
-              type="range"
-              name="range"
-              min="6"
-              max="10"
-              step="1"
-              defaultValue={quizLength}
-              className="range [--range-shdw:black] range-xs mb-5"
-            />
-          )}
-        </div>
-
-        <div className="quiz-container container flex flex-col justify-center gap-4 p-4 md:gap-10 md:p-6">
-          {!showSummary ? (
-            <div className="space-y-5">
-              <h2 className="text-xl font-semibold tracking-tighter border-black border-b pb-3">
-                {questions[currentQuestionIndex]?.question ||
-                  'Your first question will appear here.'}
+        {/* Show header */}
+        {stage === 'setup' && (
+          <header className="">
+            <div className="flex justify-between mb-4">
+              <h2 className="self-center">
+                Set number of questions: {''}
+                <span className="font-medium text-xs text-white bg-black px-2 py-1 rounded-md">
+                  {!quizLength ? 7 : quizLength}
+                </span>
               </h2>
-              <div className="flex flex-col space-y-2">
-                {questions[currentQuestionIndex]?.answers.map(
-                  (answer, index) => (
-                    <label key={index} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        className="form-checkbox mr-2"
-                        checked={
-                          userAnswers[
-                            questions[currentQuestionIndex].id
-                          ]?.includes(answer) || false
-                        }
-                        onChange={() =>
-                          handleAnswerChange(
-                            questions[currentQuestionIndex].id,
-                            answer
-                          )
-                        }
-                      />
-                      {answer}
-                    </label>
-                  )
-                )}
+
+              <div className="quiz-container">
+                {!questions.length ? (
+                  <button
+                    className="text-sm bg-black text-white p-2 rounded"
+                    onClick={loadQuiz}
+                  >
+                    Start
+                  </button>
+                ) : null}
               </div>
-              <button
-                className="bg-black text-sm text-white p-3 rounded w-full md:w-auto"
-                onClick={submitAnswer}
-              >
-                Submit Answer
-              </button>
             </div>
-          ) : (
-            <div className="flex flex-col space-y-5">
-              {/* Display the confetti animation if the quiz is passed */}
-              {quizPassed && <ConfettiComponent />}
-              <h2 className="text-xl font-semibold tracking-tighter border-black border-b pb-3">
+
+            {!questions.length && (
+              <input
+                onChange={handleRange}
+                type="range"
+                name="range"
+                min="6"
+                max="10"
+                step="1"
+                defaultValue={quizLength}
+                className="range [--range-shdw:black] range-xs w-3/4"
+              />
+            )}
+          </header>
+        )}
+        {/* End of header */}
+
+        {/*Show quiz */}
+        {stage === 'quiz' && (
+          <div className="">
+            <h2 className="text-xl font-semibold tracking-tighter border-black border-b pb-4 w-full md:w-3/4">
+              {questions[currentQuestionIndex]?.question ||
+                'Your first question will appear here.'}
+            </h2>
+
+            {/* Display the possible answers */}
+            <div className="form-control space-y-4 my-4">
+              {questions[currentQuestionIndex]?.answers.map((answer, index) => (
+                <label key={index} className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    className="mr-2"
+                    name="answer"
+                    value={answer}
+                  />
+                  {answer}
+                </label>
+              ))}
+            </div>
+            <button
+              className="bg-black text-sm text-white p-3 rounded w-full md:w-auto"
+              onClick={handleSubmitAnswer}
+            >
+              Submit Answer
+            </button>
+          </div>
+        )}
+        {/* End quiz */}
+
+        {/* Show summary */}
+        {stage === 'summary' && (
+          <div className="">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-semibold tracking-tighter border-black border-b pb-4 w-full md:w-3/4">
                 Quiz Summary
               </h2>
-              <div className="flex flex-col space-y-2">
-                <p className="font-semibold pb-4 border-gray-300 border-b">
-                  Correct Answers:{' '}
-                  <span className="font-normal">
-                    {quizLength - missedQuestions.length}
-                  </span>
-                </p>
-                <p className="font-semibold pb-4 border-gray-300 border-b">
-                  Incorrect Answers:{' '}
-                  <span className="font-normal">{missedQuestions.length}</span>
-                </p>
-                <p className="font-semibold mb-5">
-                  {missedQuestions.length > 0 ? 'What you missed: ' : ''}
-                </p>
-                <ul className="space-y-2">
-                  {/* Display the question and answer missed */}
+              <button
+                className="text-sm bg-black text-white p-2 rounded"
+                onClick={resetQuiz}
+              >
+                Reset
+              </button>
+            </div>
+            <p className="font-semibold tracking-tighter mt-4">
+              You scored: {correctAnswerCount.length} out of {quizLength}
+            </p>
+            {correctAnswerCount.length >= 6 ? (
+              <>
+                <ConfettiComponent />
+              </>
+            ) : (
+              <p className="font-semibold tracking-tighter mt-4">
+                You didn't pass.{' '}
+                <span
+                  onClick={resetQuiz}
+                  className="underline-offset-2 cursor-pointer text-blue-700 font-medium"
+                >
+                  {' '}
+                  Click here{' '}
+                </span>
+                to try again.
+              </p>
+            )}
+            {missedQuestions.length > 0 && (
+              <div className="missed-questions">
+                <ul>
                   {missedQuestions.map((question, index) => (
-                    <li key={index} className="mb-4">
-                      <p className="font-semibold mb-3">{question}</p>
-                      <p className="font-normal">
-                        Correct Answer:{' '}
-                        {questions
-                          .find((q) => q.question === question)
-                          ?.correct.join(', ')}
-                      </p>
+                    <li key={index} className="mt-2">
+                      <h3 className="font-semibold tracking-tighter mt-4">
+                        Question you missed:
+                      </h3>
+                      {question.question}
                     </li>
                   ))}
                 </ul>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
+        {/* End summary */}
       </main>
     </>
   );
