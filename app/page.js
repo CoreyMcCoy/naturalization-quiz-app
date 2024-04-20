@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import ConfettiComponent from './components/ConfettiComponent';
 
 export default function Home() {
   return (

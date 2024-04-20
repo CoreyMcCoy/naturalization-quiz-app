@@ -7,36 +7,44 @@ const ConfettiComponent = () => {
   const [isConfettiVisible, setIsConfettiVisible] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
 
-  useEffect(() => {
-    // Start the confetti animation
-    setIsConfettiVisible(true);
-    setIsFadingOut(false); // Reset fade out
+  // useEffect(() => {
+  //   // Start the confetti animation
+  //   setIsConfettiVisible(true);
+  //   setIsFadingOut(false); // Reset fade out
 
-    const timer = setTimeout(() => {
-      setIsFadingOut(true); // Start fade out
+  //   const timer = setTimeout(() => {
+  //     setIsFadingOut(true); // Start fade out
 
-      setTimeout(() => {
-        setIsConfettiVisible(false); // Finally hide confetti
-        setIsFadingOut(false); // Reset fade out state
-      }, 1000); // This should match the CSS transition time for fading
-    }, 4500); // Duration before starting the fade out
+  //     setTimeout(() => {
+  //       setIsConfettiVisible(false); // Finally hide confetti
+  //       setIsFadingOut(false); // Reset fade out state
+  //     }, 1000); // This should match the CSS transition time for fading
+  //   }, 4500); // Duration before starting the fade out
 
-    return () => {
-      clearTimeout(timer); // Clear the timer when the component unmounts
-    };
-  }, []);
+  //   return () => {
+  //     clearTimeout(timer); // Clear the timer when the component unmounts
+  //   };
+  // }, []);
 
   return (
     <>
-      {isConfettiVisible && (
-        <div className={isFadingOut ? 'confetti-fade-out' : ''}>
-          {/* Display "Great Job!" in the middle of the page */}
+      {/* Set the Confetti to 1000ms */}
+      <Confetti
+        width={window.innerWidth}
+        height={window.innerHeight}
+        numberOfPieces={750}
+        recycle={false}
+        run={true}
+        confettiSource={{ x: 0, y: 0, w: window.innerWidth, h: 0 }}
+        // onConfettiComplete={() => {
+        //   setIsConfettiVisible(false);
+        // }}
+      />
+      {/* {isConfettiVisible && (
+        <div className={isFadingOut ? 'confetti-fade-out' : null}>
           <Confetti />
-          <span className="text-center text-4xl font-black text-green-600">
-            Great Job...You Passed!
-          </span>
         </div>
-      )}
+      )} */}
     </>
   );
 };
